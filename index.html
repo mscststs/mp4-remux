@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test</title>
+  <script type="module">
+    import remux from "./src/index.ts";
+
+    function getStream(file){
+      const b = new Blob([file], { type: "video/mp4" });
+      return b.stream();
+    }
+
+    window.handleMerge = async  function (){
+      const videoStream = getStream(document.querySelector("#video").files[0]);
+      const audioStream = getStream(document.querySelector("#audio").files[0]);
+
+
+      const remuxedStream = remux(videoStream, audioStream);
+
+      const fileHandler = await window?.showSaveFilePicker({
+        suggestedName: "output.mp4",
+        types: [
+          { accept: {
+              "video/mp4": ".mp4"
+            }
+          }],
+      });
+
+      const writable = await fileHandler.createWritable();
+
+      const writableStream = new WritableStream({
+        write: (chunk)=>writable.write(chunk),
+        close: ()=>writable.close(),
+      })
+
+      remuxedStream.pipeTo(writableStream);
+    }
+
+  </script>
+</head>
+<body>
+  <div style="display:flex;flex-direction: column; padding:20px;">
+
+    <label for="">视频<input type="file" id="video"></label>
+    <label for="">音频<input type="file" id="audio"></label>
+    <button onclick="handleMerge()"> 合并</button>
+  </div>
+</body>
+</html>

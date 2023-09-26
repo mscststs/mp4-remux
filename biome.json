@@ -1,0 +1,33 @@
+{
+  "formatter": {
+    "lineWidth": 120,
+    "indentStyle": "space",
+    "indentSize": 2
+  },
+  "files": {
+    "ignore": ["dist/*", "node_modules/*", "public/lib/*"]
+  },
+  "javascript": {
+    "formatter": {
+      "semicolons": "always"
+    }
+  },
+  "linter": {
+    "rules": {
+      "style": {
+        "useSelfClosingElements": "off"
+      },
+      "a11y": {
+        "noAutofocus": "off",
+        "useValidAnchor": "off",
+        "useKeyWithClickEvents": "off",
+        "useAnchorContent": "off",
+        "useAltText": "off"
+      },
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noAsyncPromiseExecutor": "off"
+      }
+    }
+  }
+}
