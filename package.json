@@ -1,10 +1,10 @@
 {
   "name": "mp4-remux",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Remux Video and Audio as Stream in browser",
   "main": "./lib/mp4-remux.js",
   "type": "module",
-  "export":{
+  "export": {
     ".": {
       "import": {
         "types": "./types/index.d.ts",
@@ -17,9 +17,9 @@
     }
   },
   "scripts": {
-    "dev":"vite dev",
-    "build":"vite build && npm run build-types",
-    "build-types":"tsc --emitDeclarationOnly --outDir types -p src",
+    "dev": "vite dev",
+    "build": "vite build && npm run build-types",
+    "build-types": "tsc --emitDeclarationOnly --outDir types -p src",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "types": "types/index.d.ts",
@@ -27,7 +27,10 @@
     "type": "git",
     "url": "git+https://github.com/mscststs/mp4-remux.git"
   },
-  "keywords": ["mp4","remux"],
+  "keywords": [
+    "mp4",
+    "remux"
+  ],
   "author": "mscststs",
   "license": "ISC",
   "bugs": {

@@ -24,20 +24,28 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
       const videoMoov = videoStream.moov;
       const audioMoov = audioStream.moov;
       if (videoMoov && audioMoov) {
-        const audioTrak = audioMoov.boxs.find((item) => item instanceof Boxes.trak) as Boxes.trak;
 
-        const videoMvex = videoMoov.boxs.find((item) => item instanceof Boxes.mvex) as Boxes.mvex;
-        const audioMvex = audioMoov.boxs.find((item) => item instanceof Boxes.mvex) as Boxes.mvex;
+        const videoMvex = videoMoov.mvex;
+        const audioMvex = audioMoov.mvex;
         if (videoMvex && audioMvex) {
-          const videoTrex = videoMvex.boxs.find((item) => item instanceof Boxes.trex);
-          const audioTrex = audioMvex.boxs.find((item) => item instanceof Boxes.trex);
+          const videoTrex = videoMvex.trex;
+          const audioTrex = audioMvex.trex;
+
+          videoTrex.track_id = 1;
+          audioTrex.track_id = 2;
 
           // console.log(videoMvex, audioMvex);
           videoMvex.boxs = [];
           videoTrex && videoMvex.boxs.push(videoTrex);
           audioTrex && videoMvex.boxs.push(audioTrex);
         }
-        if (audioTrak) {
+
+        const videoTrak = videoMoov.trak;
+        const audioTrak = audioMoov.trak;
+        if (videoTrak && audioTrak) {
+          videoTrak.tkhd.track_id = 1;
+          audioTrak.tkhd.track_id = 2;
+
           videoMoov.boxs.push(audioTrak);
           for (const item of videoStream.boxs) {
             callWrite(item.raw);
@@ -64,21 +72,24 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
         // Step1 获取需要的分片数据
         const videoMoof = videoStream.boxs.find((item) => {
           return (
-            item instanceof Boxes.moof && item.boxs[0] instanceof Boxes.mfhd && item.boxs[0].sequence_number === status
+            item instanceof Boxes.moof && item?.mfhd.sequence_number === status
           );
-        });
+        }) as Boxes.moof;
         const audioMoof = audioStream.boxs.find((item) => {
           return (
-            item instanceof Boxes.moof && item.boxs[0] instanceof Boxes.mfhd && item.boxs[0].sequence_number === status
+            item instanceof Boxes.moof && item?.mfhd.sequence_number === status
           );
-        });
+        }) as Boxes.moof;
         const videoData = videoMoof && (videoStream.boxs[videoStream.boxs.indexOf(videoMoof) + 1] as Boxes.mdat);
         const audioData = audioMoof && (audioStream.boxs[audioStream.boxs.indexOf(audioMoof) + 1] as Boxes.mdat);
 
         if (videoMoof && videoData && audioMoof && audioData) {
           // 处理合并流程
-          const videoTraf = videoMoof.boxs.find((item) => item instanceof Boxes.traf) as Boxes.traf;
-          const audioTraf = audioMoof.boxs.find((item) => item instanceof Boxes.traf) as Boxes.traf;
+          const videoTraf = videoMoof.traf;
+          const audioTraf = audioMoof.traf;
+
+          videoTraf.tfhd.track_id = 1;
+          audioTraf.tfhd.track_id = 2;
           if (videoTraf?.trun && audioTraf?.trun) {
             const audioTrafSize = audioTraf.size;
             const videoMoofSize = videoMoof.size;
@@ -108,13 +119,29 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
         // 追加 audio
         const audioMoof = audioStream.boxs.find((item) => {
           return (
-            item instanceof Boxes.moof && item.boxs[0] instanceof Boxes.mfhd && item.boxs[0].sequence_number === status
+            item instanceof Boxes.moof && item?.mfhd.sequence_number === status
           );
-        });
+        }) as Boxes.moof;
+        audioMoof.traf.tfhd.track_id = 2;
         const audioData = audioMoof && (audioStream.boxs[audioStream.boxs.indexOf(audioMoof) + 1] as Boxes.mdat);
         if (audioMoof && audioData) {
           callWrite(audioMoof.raw);
           callWrite(audioData.raw);
+          status += 1;
+          checkStream();
+        }
+      } else if (status > audioMaxIndex && status <= videoMaxIndex) {
+        // 追加 Video
+        const videoMoof = videoStream.boxs.find((item) => {
+          return (
+            item instanceof Boxes.moof && item?.mfhd.sequence_number === status
+          );
+        }) as Boxes.moof;
+        videoMoof.traf.tfhd.track_id = 1;
+        const videoData = videoMoof && (videoStream.boxs[videoStream.boxs.indexOf(videoMoof) + 1] as Boxes.mdat);
+        if (videoMoof && videoData) {
+          callWrite(videoMoof.raw);
+          callWrite(videoData.raw);
           status += 1;
           checkStream();
         }
@@ -130,7 +157,7 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
 
   // 并行读取两个reader的数据
   async function readerHandler(streamReader: ReadableStreamDefaultReader<any>, mp4Stream: Mp4Stream) {
-    while (1) {
+    while (true) {
       const { done, value } = await streamReader.read();
       if (value) {
         mp4Stream.push(value);

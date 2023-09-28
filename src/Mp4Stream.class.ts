@@ -1,6 +1,5 @@
 import * as Boxes from "./boxes.class";
 import { Box } from "./boxes.class/types";
-import { sidx } from "./boxes.class/sidx";
 
 export class Mp4Stream {
   stream: Uint8Array = new Uint8Array();
@@ -9,10 +8,10 @@ export class Mp4Stream {
   isEnd = false;
 
   get sidx() {
-    return this.boxs.find((box) => box.type === "sidx") as sidx;
+    return this.boxs.find((box) => box instanceof Boxes.sidx) as Boxes.sidx;
   }
   get moov() {
-    return this.boxs.find((box) => box.type === "moov");
+    return this.boxs.find((box) => box instanceof Boxes.moov) as Boxes.moov;
   }
 
   push(value: Uint8Array) {

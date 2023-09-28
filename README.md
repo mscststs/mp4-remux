@@ -15,10 +15,10 @@ https://tools.mscststs.com/tools/mp4-remux
 
 1. use CDN
 ```html
-<script src="https://unpkg.com/mp4-remux@0.1.0/lib/mp4-remux.iife.js" ></script>
+<script src="https://unpkg.com/mp4-remux@0.2.0/lib/mp4-remux.iife.js" ></script>
 ```
 ```html
-<script src="https://cdn.jsdelivr.net/npm/mp4-remux@0.1.0/lib/mp4-remux.iife.js" ></script>
+<script src="https://cdn.jsdelivr.net/npm/mp4-remux@0.2.0/lib/mp4-remux.iife.js" ></script>
 ```
 
 2. use NPM
@@ -59,7 +59,7 @@ remuxedStream.pipeTo(writableStream);
 ## 不足
 
 1. 目前仅支持专门对于 Dash 进行分割的文件，即其中一个文件仅包含音频，另一个文件仅包含视频
-2. 目前仅支持两个文件含有不同 Trackid 的情况，暂时没有对所有的 Trackid 重新编码
+2. (fixed in: v0.2.0) ~~目前仅支持两个文件含有不同 Trackid 的情况，暂时没有对所有的 Trackid 重新编码~~ 
 
 
 ## 鸣谢 | Thanks

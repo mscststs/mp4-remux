@@ -32,7 +32,10 @@
 
       const writableStream = new WritableStream({
         write: (chunk)=>writable.write(chunk),
-        close: ()=>writable.close(),
+        close: ()=>{
+          alert("Write Success");
+          writable.close()
+        },
       })
 
       remuxedStream.pipeTo(writableStream);

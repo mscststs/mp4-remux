@@ -6,7 +6,7 @@ export declare class Mp4Stream {
     boxs: Box[];
     isEnd: boolean;
     get sidx(): Boxes.sidx;
-    get moov(): Box | undefined;
+    get moov(): Boxes.moov;
     push(value: Uint8Array): void;
     /**
      * 将stream 截断，把pos前的数据返回，然后更新dataView
