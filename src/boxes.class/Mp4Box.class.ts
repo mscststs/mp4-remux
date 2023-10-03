@@ -1,15 +1,14 @@
 import { Box } from "./types";
 import * as Boxes from ".";
+import StreamBasic from "../basic.class";
 
-export class Mp4Box {
-  stream: Uint8Array = new Uint8Array();
-  dv: DataView = new DataView(new Uint8Array().buffer);
+export class Mp4Box extends StreamBasic {
   boxs: Box[] = [];
   boxPos = 0; // 记录元数据和盒子数据的偏差
 
   constructor(buf: Uint8Array) {
+    super();
     this.stream = buf;
-    this.dv = new DataView(buf.buffer);
   }
 
   set size(value: number) {
@@ -48,70 +47,7 @@ export class Mp4Box {
 
     return this.stream;
   }
-  writeUint(size: 1 | 2 | 4, val: number, pos = 0) {
-    const view = this.dv;
-    switch (size) {
-      case 1:
-        view.setUint8(pos, val);
-        break;
-      case 2:
-        view.setUint16(pos, val);
-        break;
-      case 4:
-        view.setUint32(pos, val);
-        break;
-    }
-  }
-  writeInt(size: 1 | 2 | 4, val: number, pos = 0) {
-    const view = this.dv;
-    switch (size) {
-      case 1:
-        view.setInt8(pos, val);
-        break;
-      case 2:
-        view.setInt16(pos, val);
-        break;
-      case 4:
-        view.setInt32(pos, val);
-        break;
-    }
-  }
-
-  readInt(size: 1 | 2 | 4 = 4, pos = 0) {
-    const view = this.dv;
-    switch (size) {
-      case 1:
-        return view.getInt8(pos);
-      case 2:
-        return view.getInt16(pos);
-      case 4:
-        return view.getInt32(pos);
-    }
-  }
-
-  // use dataView to Get Unsigned Int
-  readUint(size: 1 | 2 | 4, pos = 0) {
-    const view = this.dv;
-    switch (size) {
-      case 1:
-        return view.getUint8(pos);
-      case 2:
-        return view.getUint16(pos);
-      case 4:
-        return view.getUint32(pos);
-    }
-  }
-  /**
-   * Read string by char code from Uint8Array
-   * @param size
-   */
-  readString(size: 4, pos = 0) {
-    let s = "";
-    for (let i = 0; i < size; i++) {
-      s += String.fromCharCode(this.readUint(1, pos + i));
-    }
-    return s;
-  }
+  
 
   parse(boxPos: number) {
     this.boxPos = boxPos;

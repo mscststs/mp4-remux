@@ -17,3 +17,6 @@ export { mvex } from "./mvex";
 export { trak } from "./trak";
 export { tkhd } from "./tkhd";
 export { edts } from "./edts";
+export { mfra } from "./mfra";
+export { tfra } from "./tfra";
+export { mfro } from "./mfro";

@@ -1,8 +1,7 @@
 import * as Boxes from "./boxes.class";
 import { Box } from "./boxes.class/types";
-export declare class Mp4Stream {
-    stream: Uint8Array;
-    dv: DataView;
+import StreamBasic from "./basic.class";
+export declare class Mp4Stream extends StreamBasic {
     boxs: Box[];
     isEnd: boolean;
     get sidx(): Boxes.sidx;
@@ -13,12 +12,6 @@ export declare class Mp4Stream {
      * @param pos
      */
     slice(pos: number): Uint8Array;
-    readUint(size: 1 | 2 | 4, pos?: number): number;
-    /**
-     * Read string by char code from Uint8Array
-     * @param size
-     */
-    readString(size: 4, pos?: number): string;
     parse(): void;
     end(): void;
 }

@@ -6,10 +6,17 @@
   <title>Test</title>
   <script type="module">
     import remux from "./src/index.ts";
+    import { Mp4Stream } from "./src/Mp4Stream.class";
+
 
     function getStream(file){
       const b = new Blob([file], { type: "video/mp4" });
       return b.stream();
+    }
+    // get Uint8Array
+    function getBuffer(file){
+      const b = new Blob([file], { type: "video/mp4" });
+      return b.arrayBuffer();
     }
 
     window.handleMerge = async  function (){
@@ -41,6 +48,16 @@
       remuxedStream.pipeTo(writableStream);
     }
 
+
+    window.handleDetect = async function (){
+      const videoBuffer = await getBuffer(document.querySelector("#det").files[0]);
+      const buf = new Uint8Array(videoBuffer)
+      const mp4Stream = new Mp4Stream();
+      mp4Stream.push(buf);
+      mp4Stream.parse();
+      console.log(mp4Stream)
+    }
+
   </script>
 </head>
 <body>
@@ -49,6 +66,13 @@
     <label for="">视频<input type="file" id="video"></label>
     <label for="">音频<input type="file" id="audio"></label>
     <button onclick="handleMerge()"> 合并</button>
+  </div>
+
+
+  <div>
+
+    <label for="">视频<input type="file" id="det"></label>
+    <button onclick="handleDetect()">检测</button>
   </div>
 </body>
 </html>

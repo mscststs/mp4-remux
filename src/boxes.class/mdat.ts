@@ -8,7 +8,6 @@ export class mdat extends Mp4Box {
     newBuf.set(this.stream);
     newBuf.set(value, this.stream.length);
     this.stream = newBuf;
-    this.dv = new DataView(this.stream.buffer);
     this.size = newBuf.length;
   }
 }

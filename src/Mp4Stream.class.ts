@@ -1,9 +1,8 @@
 import * as Boxes from "./boxes.class";
 import { Box } from "./boxes.class/types";
+import StreamBasic from "./basic.class";
 
-export class Mp4Stream {
-  stream: Uint8Array = new Uint8Array();
-  dv: DataView = new DataView(new Uint8Array().buffer);
+export class Mp4Stream  extends StreamBasic{
   boxs: Box[] = [];
   isEnd = false;
 
@@ -19,7 +18,6 @@ export class Mp4Stream {
     newBuf.set(this.stream);
     newBuf.set(value, this.stream.length);
     this.stream = newBuf;
-    this.dv = new DataView(this.stream.buffer);
   }
 
   /**
@@ -31,31 +29,7 @@ export class Mp4Stream {
     const newBuf = new Uint8Array(this.stream.length - pos);
     newBuf.set(this.stream.slice(pos));
     this.stream = newBuf;
-    this.dv = new DataView(this.stream.buffer);
     return sliceBuf;
-  }
-  // use dataView to Get Unsigned Int
-  readUint(size: 1 | 2 | 4, pos = 0) {
-    const view = this.dv;
-    switch (size) {
-      case 1:
-        return view.getUint8(pos);
-      case 2:
-        return view.getUint16(pos);
-      case 4:
-        return view.getUint32(pos);
-    }
-  }
-  /**
-   * Read string by char code from Uint8Array
-   * @param size
-   */
-  readString(size: 4, pos = 0) {
-    let s = "";
-    for (let i = 0; i < size; i++) {
-      s += String.fromCharCode(this.readUint(1, pos + i));
-    }
-    return s;
   }
   parse() {
     // 检查this.stream 的长度是否足够 2*4*8
