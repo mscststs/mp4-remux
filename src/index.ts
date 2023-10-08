@@ -14,9 +14,20 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
 
   let status = -1;
 
+  let outputLength = 0; // 记录写入的总长度
+  let videoSampleTime = 0; // 视频时长
+  let audioSampleTime = 0; // 音频时长
+
   function callWrite(buf: Uint8Array) {
+    outputLength += buf.length; // 更新总写入长度
     writer.write(buf);
   }
+
+  const mfraStream = new Mp4Stream();
+  mfraStream.push(new Uint8Array([0, 0, 0, 72, 109, 102, 114, 97, 0, 0, 0, 24, 116, 102, 114, 97, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24, 116, 102, 114, 97, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 109, 102, 114, 111, 0, 0, 0, 0, 0, 0, 0, 0]));
+  mfraStream.parse();
+  const videoTfra = mfraStream.boxs[0].boxs[0] as Boxes.tfra;
+  const audioTfra = mfraStream.boxs[0].boxs[1] as Boxes.tfra;
 
   async function checkStream() {
     if (status === -1) {
@@ -66,6 +77,8 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
     if (status !== -1) {
       const videoMaxIndex = videoStream.sidx.reference_count;
       const audioMaxIndex = audioStream.sidx.reference_count;
+      const moof_offset = outputLength;
+
       if (status <= videoMaxIndex && status <= audioMaxIndex) {
         // 合并
 
@@ -97,6 +110,35 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
             videoTraf.trun.data_offset = videoMoofSize + audioTrafSize + 8;
             audioTraf.trun.data_offset = videoMoofSize + audioTrafSize + videoDataSize;
 
+            videoTfra.entries = [
+              ...videoTfra.entries,
+              {
+                moof_offset: moof_offset,
+                sample_number: 1,
+                time: videoSampleTime,
+                traf_number:1,
+                trun_number:1
+              }
+            ];
+            audioTfra.entries = [
+              ...audioTfra.entries,
+              {
+                moof_offset: moof_offset,
+                sample_number: 1,
+                time: audioSampleTime,
+                traf_number:1,
+                trun_number:1
+              }
+            ];
+
+            videoSampleTime += videoTraf.trun.samples.reduce((p, c) => {
+              return p + c.sample_duration;
+            }, 0);
+
+            audioSampleTime += audioTraf.trun.samples.reduce((p, c) => {
+              return p + c.sample_duration;
+            }, 0);
+
             videoMoof.boxs.push(audioTraf);
 
             callWrite(videoMoof.raw);
@@ -123,6 +165,21 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
           );
         }) as Boxes.moof;
         audioMoof.traf.tfhd.track_id = 2;
+
+        audioTfra.entries = [
+          ...audioTfra.entries,
+          {
+            moof_offset: moof_offset,
+            sample_number: 1,
+            time: audioSampleTime,
+            traf_number:1,
+            trun_number:1
+          }
+        ];
+        audioSampleTime += audioMoof.traf.trun.samples.reduce((p, c) => {
+          return p + c.sample_duration;
+        }, 0);
+
         const audioData = audioMoof && (audioStream.boxs[audioStream.boxs.indexOf(audioMoof) + 1] as Boxes.mdat);
         if (audioMoof && audioData) {
           callWrite(audioMoof.raw);
@@ -138,6 +195,21 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
           );
         }) as Boxes.moof;
         videoMoof.traf.tfhd.track_id = 1;
+
+        videoTfra.entries = [
+          ...videoTfra.entries,
+          {
+            moof_offset: moof_offset,
+            sample_number: 1,
+            time: videoSampleTime,
+            traf_number:1,
+            trun_number:1
+          }
+        ];
+        videoSampleTime += videoMoof.traf.trun.samples.reduce((p, c) => {
+          return p + c.sample_duration;
+        }, 0);
+
         const videoData = videoMoof && (videoStream.boxs[videoStream.boxs.indexOf(videoMoof) + 1] as Boxes.mdat);
         if (videoMoof && videoData) {
           callWrite(videoMoof.raw);
@@ -147,6 +219,10 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
         }
       } else if (status > videoMaxIndex && status > audioMaxIndex) {
         // end
+        const mfro = mfraStream.boxs[0].boxs[2] as Boxes.mfro;
+        mfro._size = mfraStream.boxs[0].raw.length;
+        callWrite(mfraStream.boxs[0].raw);
+
         status = -2;
         // console.log("call close", status, videoMaxIndex, audioMaxIndex);
         // writer.releaseLock();

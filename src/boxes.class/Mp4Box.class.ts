@@ -43,9 +43,10 @@ export class Mp4Box extends StreamBasic {
         pos += item.length;
       }
       return nbuf;
+    }else{
+      this.size = this.stream.length;
+      return this.stream;
     }
-
-    return this.stream;
   }
   
 
