@@ -18,15 +18,18 @@ export default class StreamBasic {
         view.setUint16(pos, val);
         break;
       case 3:
-        view.setUint16(pos, val >> 8);
-        view.setUint8(pos+2, val & 0xff);
+        view.setUint8(pos, val & 0xff);
+        view.setUint8(pos + 1, (val >> 8) & 0xff);
+        view.setUint8(pos + 2, (val >> 16) & 0xff);
         return;
       case 4:
         view.setUint32(pos, val);
         break;
       case 8:
-        view.setUint32(pos, val >> 32)
-        view.setUint32(pos+4, val & 0xffffffff);
+        const highWord = Math.floor(val / 0x100000000);
+        const lowWord = val & 0xffffffff;
+        view.setUint32(pos, lowWord);
+        view.setUint32(pos + 4, highWord);
         break;
     }
   }

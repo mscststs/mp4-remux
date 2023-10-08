@@ -29,7 +29,11 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
   const videoTfra = mfraStream.boxs[0].boxs[0] as Boxes.tfra;
   const audioTfra = mfraStream.boxs[0].boxs[1] as Boxes.tfra;
 
-  async function checkStream() {
+  function checkStream() {
+    if(status === -2){
+      return;
+    }
+
     if (status === -1) {
       // 合并 moov 中的 track 信息
       const videoMoov = videoStream.moov;
@@ -73,7 +77,7 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
     if (!videoStream.sidx || !audioStream.sidx) {
       return;
     }
-
+    
     if (status !== -1) {
       const videoMaxIndex = videoStream.sidx.reference_count;
       const audioMaxIndex = audioStream.sidx.reference_count;
@@ -110,34 +114,6 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
             videoTraf.trun.data_offset = videoMoofSize + audioTrafSize + 8;
             audioTraf.trun.data_offset = videoMoofSize + audioTrafSize + videoDataSize;
 
-            videoTfra.entries = [
-              ...videoTfra.entries,
-              {
-                moof_offset: moof_offset,
-                sample_number: 1,
-                time: videoSampleTime,
-                traf_number:1,
-                trun_number:1
-              }
-            ];
-            audioTfra.entries = [
-              ...audioTfra.entries,
-              {
-                moof_offset: moof_offset,
-                sample_number: 1,
-                time: audioSampleTime,
-                traf_number:1,
-                trun_number:1
-              }
-            ];
-
-            videoSampleTime += videoTraf.trun.samples.reduce((p, c) => {
-              return p + c.sample_duration;
-            }, 0);
-
-            audioSampleTime += audioTraf.trun.samples.reduce((p, c) => {
-              return p + c.sample_duration;
-            }, 0);
 
             videoMoof.boxs.push(audioTraf);
 
@@ -146,6 +122,28 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
             // 处理 mdat 合并
             videoData.push(audioData.raw.slice(8));
             callWrite(videoData.raw);
+
+
+            
+            videoTfra.entries = videoTfra.entries.concat({
+              moof_offset: moof_offset,
+              sample_number: 1,
+              time: videoSampleTime,
+              traf_number:1,
+              trun_number:1
+            });
+            audioTfra.entries = audioTfra.entries.concat({
+              moof_offset: moof_offset,
+              sample_number: 1,
+              time: audioSampleTime,
+              traf_number:1,
+              trun_number:1
+            });
+
+            videoSampleTime += videoStream.sidx.refList[status-1].subsegment_duration || 0;
+
+            audioSampleTime += audioStream.sidx.refList[status-1].subsegment_duration || 0;
+
 
             // 释放存储空间
             videoStream.boxs = videoStream.boxs.filter((item) => item !== videoMoof);
@@ -166,24 +164,22 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
         }) as Boxes.moof;
         audioMoof.traf.tfhd.track_id = 2;
 
-        audioTfra.entries = [
-          ...audioTfra.entries,
-          {
-            moof_offset: moof_offset,
-            sample_number: 1,
-            time: audioSampleTime,
-            traf_number:1,
-            trun_number:1
-          }
-        ];
-        audioSampleTime += audioMoof.traf.trun.samples.reduce((p, c) => {
-          return p + c.sample_duration;
-        }, 0);
 
         const audioData = audioMoof && (audioStream.boxs[audioStream.boxs.indexOf(audioMoof) + 1] as Boxes.mdat);
         if (audioMoof && audioData) {
           callWrite(audioMoof.raw);
           callWrite(audioData.raw);
+
+          audioTfra.entries = audioTfra.entries.concat({
+            moof_offset: moof_offset,
+            sample_number: 1,
+            time: audioSampleTime,
+            traf_number:1,
+            trun_number:1
+          });
+          
+          audioSampleTime += audioStream.sidx.refList[status-1].subsegment_duration || 0;
+
           status += 1;
           checkStream();
         }
@@ -196,25 +192,23 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
         }) as Boxes.moof;
         videoMoof.traf.tfhd.track_id = 1;
 
-        videoTfra.entries = [
-          ...videoTfra.entries,
-          {
-            moof_offset: moof_offset,
-            sample_number: 1,
-            time: videoSampleTime,
-            traf_number:1,
-            trun_number:1
-          }
-        ];
-        videoSampleTime += videoMoof.traf.trun.samples.reduce((p, c) => {
-          return p + c.sample_duration;
-        }, 0);
 
         const videoData = videoMoof && (videoStream.boxs[videoStream.boxs.indexOf(videoMoof) + 1] as Boxes.mdat);
         if (videoMoof && videoData) {
           callWrite(videoMoof.raw);
           callWrite(videoData.raw);
+
+          videoTfra.entries = videoTfra.entries.concat({
+            moof_offset: moof_offset,
+            sample_number: 1,
+            time: videoSampleTime,
+            traf_number:1,
+            trun_number:1
+          });
+          videoSampleTime += videoStream.sidx.refList[status-1].subsegment_duration || 0;
+
           status += 1;
+
           checkStream();
         }
       } else if (status > videoMaxIndex && status > audioMaxIndex) {
