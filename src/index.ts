@@ -35,7 +35,7 @@ export default function remux(vs: ReadableStream, as: ReadableStream) {
           audioTrex.track_id = 2;
 
           // console.log(videoMvex, audioMvex);
-          videoMvex.boxs = [];
+          videoMvex.boxs = videoMvex.boxs.filter(item=>!(item instanceof Boxes.trex));
           videoTrex && videoMvex.boxs.push(videoTrex);
           audioTrex && videoMvex.boxs.push(audioTrex);
         }

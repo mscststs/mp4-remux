@@ -1,6 +1,6 @@
 {
   "name": "mp4-remux",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Remux Video and Audio as Stream in browser",
   "main": "./lib/mp4-remux.js",
   "type": "module",
@@ -32,7 +32,7 @@
     "remux"
   ],
   "author": "mscststs",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/mscststs/mp4-remux/issues"
   },

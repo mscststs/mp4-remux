@@ -15,10 +15,10 @@ https://tools.mscststs.com/tools/mp4-remux
 
 1. use CDN
 ```html
-<script src="https://unpkg.com/mp4-remux@0.2.0/lib/mp4-remux.iife.js" ></script>
+<script src="https://unpkg.com/mp4-remux/lib/mp4-remux.iife.js" ></script>
 ```
 ```html
-<script src="https://cdn.jsdelivr.net/npm/mp4-remux@0.2.0/lib/mp4-remux.iife.js" ></script>
+<script src="https://cdn.jsdelivr.net/npm/mp4-remux/lib/mp4-remux.iife.js" ></script>
 ```
 
 2. use NPM
